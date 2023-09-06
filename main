@@ -1,0 +1,71 @@
+library(readxl) #加载读取Excel的包
+library(aTSA) 
+people=read_excel("E:/A1_21.xlsx")  #读取表格数据
+people=ts(people$sum,start = 1960,frequency = 1) 
+plot(people)
+people
+adf.test(people)#对原始数据进行ADF检验>0.05证明原始数据为非平稳的
+plot(people,type = "o",main = "国民历年总收入（万人）")
+par(mfrow=c(1,2))
+acf(people) 
+pacf(people)
+for(k in 1:2) print(Box.test(people,lag=6*k,type="Ljung-Box"))
+
+
+diff_people<-diff(people)
+plot(diff_people,type = "o")
+adf.test(diff_people)
+for(k in 1:2) print(Box.test(diff_people,lag=6*k,type="Ljung-Box"))
+diff2_people<-diff(diff_people)
+plot(diff2_people,type = "o")
+adf.test(diff2_people)
+for(k in 1:2) print(Box.test(diff2_people,lag=6*k,type="Ljung-Box"))
+
+
+
+diff3_people<-diff(diff2_people)
+plot(diff3_people,type = "o")
+adf.test(diff3_people)
+for(k in 1:2) print(Box.test(diff3_people,lag=6*k,type="Ljung-Box"))
+
+
+par(mfrow=c(1,2))
+acf(diff3_people) 
+pacf(diff3_people)
+
+fit1<-arima(diff3_people)
+summary(fit1)
+x<-window(people,start=1960,end=2014)
+fit1<-arima(x,order=c(1,3,0)) 
+fit1
+fit2<-arima(x,order=c(1,3,1))  
+fit2
+fit3<-arima(x,order=c(0,3,2))  
+fit3
+fit4<-arima(x,order=c(2,3,2))  
+fit4
+
+
+tsdiag(fit4)
+ts.diag(fit4)
+
+fore1<-forecast::forecast(fit4,h=6)
+fore1
+
+
+test<-window(people,start=2015,end=2020)
+error1<-1-test/fore1$mean 
+file1<-data.frame(fore1$mean,test,error1)
+file1
+plot(fore1)
+lines(fore1$fitted,col=2,lty=2)
+
+
+x5<-window(people,start=1960,end=2020)
+fit25<-arima(x5,order=c(2,3,2),method="ML")
+fit25
+
+fore2<-forecast::forecast(fit25,h=5)  #预测了五年
+fore2
+plot(fore2,lty=2)
+lines(fore2$fit25,col=4)
